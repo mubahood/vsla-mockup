@@ -18,22 +18,15 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [hasRedirected, setHasRedirected] = useState(false);
 
-  // BULLETPROOF redirect logic - only redirect ONCE when fully authenticated
+  // Redirect logic when authenticated
   useEffect(() => {
-    console.log('🔐 Login: Auth state changed:', { authenticated, authLoading, hasRedirected });
-    
     if (authenticated && !authLoading && !hasRedirected) {
       setHasRedirected(true);
-      
-      // Determine where to redirect
       const intendedPath = location.state?.from?.pathname;
       const redirectPath = intendedPath && intendedPath !== '/auth/login' 
         ? intendedPath 
         : '/admin/dashboard';
       
-      console.log('🔐 Login: Redirecting authenticated user to:', redirectPath);
-      
-      // Redirect automatically
       setTimeout(() => {
         navigate(redirectPath, { replace: true });
       }, 100);
@@ -42,17 +35,10 @@ export default function Login() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error for this field when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -60,7 +46,7 @@ export default function Login() {
     const newErrors = {};
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email or username is required';
+      newErrors.email = 'Email is required';
     }
     
     if (!formData.password.trim()) {
@@ -74,33 +60,24 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      showError('Please correct the errors in the form');
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setErrors({});
 
     try {
-      console.log('🔐 Login: Attempting login...');
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        console.log('✅ Login: Login successful');
-        success('Login successful! Welcome back.');
-        // Note: Redirect will be handled by useEffect when authenticated becomes true
+        success('Welcome back!');
       } else {
-        console.log('❌ Login: Login failed:', result.message);
-        showError(result.message || 'Login failed. Please check your credentials.');
-        
+        showError(result.message || 'Invalid credentials');
         if (result.errors) {
           setErrors(result.errors);
         }
       }
     } catch (err) {
-      console.error('❌ Login: Unexpected error:', err);
-      showError('An unexpected error occurred. Please try again.');
+      showError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -108,41 +85,34 @@ export default function Login() {
 
   return (
     <div className="auth-form-side">
-      {/* Show redirecting message when authenticated */}
+      {/* Success message when authenticated */}
       {authenticated && !authLoading && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-center">
-          <div className="text-green-600">
-            ✅ Login successful! Redirecting to dashboard...
-          </div>
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-center text-green-600">
+          ✅ Login successful! Redirecting...
         </div>
       )}
       
       <div className="auth-form-header">
-        <h1 className="auth-form-title">FOSTER Project Login</h1>
-        <p className="auth-form-subtitle">Access the Digital Agricultural MIS for Karamoja</p>
+        <h1 className="auth-form-title">Sign In</h1>
+        <p className="auth-form-subtitle">Access your FOSTER account</p>
         
-        {/* Demo Instructions */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-          <div className="text-blue-800 font-medium">🌾 Demo Mode</div>
-          <div className="text-blue-600 mt-1">
-            Use any email/username and any password to access the system
-          </div>
+        {/* Demo notice - compact */}
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
+          Demo: Use any email and password
         </div>
       </div>
       
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="auth-form-group">
-          <label htmlFor="email" className="auth-form-label">
-            Email / Username
-          </label>
+          <label htmlFor="email" className="auth-form-label">Email</label>
           <input
-            type="text"
+            type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleInputChange}
             className={`auth-form-input ${errors.email ? 'auth-form-input-error' : ''}`}
-            placeholder="Enter any email or username"
+            placeholder="your@email.com"
             disabled={loading}
             autoComplete="email"
           />
@@ -152,9 +122,7 @@ export default function Login() {
         </div>
         
         <div className="auth-form-group">
-          <label htmlFor="password" className="auth-form-label">
-            Password
-          </label>
+          <label htmlFor="password" className="auth-form-label">Password</label>
           <input
             type="password"
             id="password"
@@ -162,7 +130,7 @@ export default function Login() {
             value={formData.password}
             onChange={handleInputChange}
             className={`auth-form-input ${errors.password ? 'auth-form-input-error' : ''}`}
-            placeholder="Enter any password"
+            placeholder="Enter password"
             disabled={loading}
             autoComplete="current-password"
           />
@@ -193,7 +161,7 @@ export default function Login() {
       </div>
       
       <div className="auth-form-footer">
-        Don't have an account?{' '}
+        New to FOSTER?{' '}
         <Link to="/auth/register" className="auth-link">
           Create account
         </Link>

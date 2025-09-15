@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks';
 import { useToast } from '../../contexts/ToastContext';
+import { StatefulButton } from '../../components';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -16,16 +17,13 @@ export default function Register() {
     password_confirmation: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // Redirect if already authenticated
   useEffect(() => {
     if (authenticated && !authLoading) {
-      // Prevent redirect loop - check if we came from a protected route
       const from = location.state?.from?.pathname || '/admin/dashboard';
       
-      console.log('🔐 Register: Redirecting authenticated user to:', from);
-      
-      // Add a small delay to prevent immediate redirects during auth initialization
       const timer = setTimeout(() => {
         navigate(from, { replace: true });
       }, 100);
@@ -37,100 +35,152 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Basic validation
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = 'Name is required';
+    if (!form.email.trim()) newErrors.email = 'Email is required';
+    if (!form.password.trim()) newErrors.password = 'Password is required';
+    if (form.password !== form.password_confirmation) {
+      newErrors.password_confirmation = 'Passwords do not match';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
     setIsSubmitting(true);
+    setErrors({});
+    
     try {
       const result = await register(form);
       
       if (result.success) {
-        success('Registration successful! Welcome to FOSTER Project.');
-        // Navigation will be handled by the useEffect above when authenticated becomes true
+        success('Account created successfully! Welcome to FOSTER.');
       } else {
         showError(result.message || 'Registration failed. Please try again.');
+        if (result.errors) {
+          setErrors(result.errors);
+        }
       }
     } catch (error) {
-      console.error('Registration failed:', error);
-      showError('An unexpected error occurred. Please try again.');
+      showError('Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleChange = (e) => {
-    setForm(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   return (
-    <div className="auth-form-container">
-      <h1>Create Account</h1>
-      <p>Join the FOSTER Project agricultural management system</p>
+    <div className="auth-form-side">
+      <div className="auth-form-header">
+        <h1 className="auth-form-title">Create Account</h1>
+        <p className="auth-form-subtitle">Join the FOSTER project</p>
+        
+        {/* Demo notice */}
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
+          Demo: Use any details to create account
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="auth-form-group">
-          <label htmlFor="name">Full Name</label>
+          <label htmlFor="name" className="auth-form-label">Full Name</label>
           <input
             type="text"
             id="name"
             name="name"
             value={form.name}
             onChange={handleChange}
-            placeholder="Enter your full name"
-            required
+            className={`auth-form-input ${errors.name ? 'auth-form-input-error' : ''}`}
+            placeholder="John Doe"
+            disabled={isSubmitting}
           />
+          {errors.name && (
+            <div className="auth-form-error">{errors.name}</div>
+          )}
         </div>
 
         <div className="auth-form-group">
-          <label htmlFor="email">Email Address</label>
+          <label htmlFor="email" className="auth-form-label">Email</label>
           <input
             type="email"
             id="email"
             name="email"
             value={form.email}
             onChange={handleChange}
-            placeholder="Enter your email address"
-            required
+            className={`auth-form-input ${errors.email ? 'auth-form-input-error' : ''}`}
+            placeholder="john@example.com"
+            disabled={isSubmitting}
           />
+          {errors.email && (
+            <div className="auth-form-error">{errors.email}</div>
+          )}
         </div>
 
         <div className="auth-form-group">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password" className="auth-form-label">Password</label>
           <input
             type="password"
             id="password"
             name="password"
             value={form.password}
             onChange={handleChange}
-            placeholder="Create a secure password"
-            required
+            className={`auth-form-input ${errors.password ? 'auth-form-input-error' : ''}`}
+            placeholder="Create password"
+            disabled={isSubmitting}
           />
+          {errors.password && (
+            <div className="auth-form-error">{errors.password}</div>
+          )}
         </div>
 
         <div className="auth-form-group">
-          <label htmlFor="password_confirmation">Confirm Password</label>
+          <label htmlFor="password_confirmation" className="auth-form-label">Confirm Password</label>
           <input
             type="password"
             id="password_confirmation"
             name="password_confirmation"
             value={form.password_confirmation}
             onChange={handleChange}
-            placeholder="Confirm your password"
-            required
+            className={`auth-form-input ${errors.password_confirmation ? 'auth-form-input-error' : ''}`}
+            placeholder="Confirm password"
+            disabled={isSubmitting}
           />
+          {errors.password_confirmation && (
+            <div className="auth-form-error">{errors.password_confirmation}</div>
+          )}
         </div>
 
-        <button 
-          type="submit" 
-          className="auth-form-submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Creating Account...' : 'Create Account'}
-        </button>
+        <div className="auth-form-actions">
+          <StatefulButton
+            type="submit"
+            variant="accent"
+            size="lg"
+            loading={isSubmitting}
+            loadingText="Creating..."
+            className="auth-btn auth-btn-accent"
+            style={{ width: '100%' }}
+          >
+            Create Account
+          </StatefulButton>
+        </div>
       </form>
 
       <div className="auth-form-footer">
-        Already have an account? <Link to="/auth/login">Sign in here</Link>
+        Already have an account?{' '}
+        <Link to="/auth/login" className="auth-link">
+          Sign in
+        </Link>
       </div>
     </div>
   );

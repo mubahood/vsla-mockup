@@ -47,6 +47,19 @@ const AdminContentScaffold = ({
   subtitle = "",
   breadcrumbs = [],
   
+  // Custom Props (for our modules)
+  summaryCards = [],
+  quickActions = [],
+  tableTitle = "",
+  tableColumns = [],
+  tableData = [],
+  renderTableRow,
+  formTitle = "",
+  formFields = [],
+  onSubmit,
+  submitButtonText = "Submit",
+  additionalSections = [],
+  
   // Section Management
   activeSection = "table",
   onSectionChange,
@@ -736,6 +749,303 @@ const AdminContentScaffold = ({
     );
   };
 
+  // Custom render functions for our modules
+  const renderSummaryCards = () => {
+    if (!summaryCards || summaryCards.length === 0) return null;
+    
+    return (
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+        gap: '16px', 
+        marginBottom: '24px' 
+      }}>
+        {summaryCards.map((card, index) => (
+          <div
+            key={index}
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              padding: '20px',
+              borderRadius: '0px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '500', color: '#64748b', margin: 0 }}>
+                {card.title}
+              </h3>
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
+              {card.value}
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              {card.subtitle}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderQuickActions = () => {
+    if (!quickActions || quickActions.length === 0) return null;
+    
+    return (
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '12px' }}>
+          Quick Actions
+        </h3>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.onClick}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: action.variant === 'primary' ? '#f59e0b' : '#ffffff',
+                color: action.variant === 'primary' ? '#ffffff' : '#64748b',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderCustomTable = () => {
+    if (!tableData || tableData.length === 0) {
+      return (
+        <div style={{
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          borderRadius: '0px'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            padding: '48px 24px',
+            color: '#64748b'
+          }}>
+            <Database size={48} color="#cbd5e1" style={{ marginBottom: '16px' }} />
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#374151' }}>
+              No Data Available
+            </h3>
+            <p style={{ margin: 0, fontSize: '14px' }}>
+              No records found.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ marginBottom: '24px' }}>
+        {tableTitle && (
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '12px' }}>
+            {tableTitle}
+          </h3>
+        )}
+        <div style={{
+          overflowX: 'auto',
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          borderRadius: '0px'
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ backgroundColor: '#f8fafc' }}>
+              <tr>
+                {tableColumns.map((column, index) => (
+                  <th
+                    key={index}
+                    style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#64748b',
+                      borderBottom: '1px solid #e2e8f0',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableData.map((item, index) => renderTableRow ? renderTableRow(item) : (
+                <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  {tableColumns.map((column, colIndex) => (
+                    <td
+                      key={colIndex}
+                      style={{
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        color: '#1e293b'
+                      }}
+                    >
+                      {item[column.key] || '-'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCustomForm = () => {
+    if (!formFields || formFields.length === 0) return null;
+    
+    return (
+      <div style={{ marginBottom: '24px' }}>
+        {formTitle && (
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '12px' }}>
+            {formTitle}
+          </h3>
+        )}
+        <div style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          padding: '24px',
+          borderRadius: '0px'
+        }}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (onSubmit) {
+              const formData = new FormData(e.target);
+              const data = Object.fromEntries(formData.entries());
+              onSubmit(data);
+            }
+          }}>
+            <div style={{ display: 'grid', gap: '16px' }}>
+              {formFields.map((field, index) => (
+                <div key={index}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '4px'
+                  }}>
+                    {field.label}
+                    {field.required && <span style={{ color: '#ef4444' }}> *</span>}
+                  </label>
+                  {field.type === 'select' ? (
+                    <select
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      required={field.required}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0px',
+                        fontSize: '14px',
+                        backgroundColor: '#ffffff'
+                      }}
+                    >
+                      {field.options?.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === 'textarea' ? (
+                    <textarea
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0px',
+                        fontSize: '14px',
+                        minHeight: '80px',
+                        resize: 'vertical'
+                      }}
+                    />
+                  ) : (
+                    <input
+                      type={field.type}
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: '20px' }}>
+              <button
+                type="submit"
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#f59e0b',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '0px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                {submitButtonText}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdditionalSections = () => {
+    if (!additionalSections || additionalSections.length === 0) return null;
+    
+    return (
+      <div>
+        {additionalSections.map((section, index) => (
+          <div key={index} style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '12px' }}>
+              {section.title}
+            </h3>
+            <div style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              borderRadius: '0px'
+            }}>
+              {section.content}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AdminScaffoldContext.Provider value={contextValue}>
       <div
@@ -789,25 +1099,37 @@ const AdminContentScaffold = ({
         
         {/* Main Content */}
         <main style={baseStyles.content}>
-          {activeSection === 'table' && (
-            <TableSection {...tableProps} />
-          )}
+          {/* Custom Layout for our modules */}
+          {summaryCards.length > 0 && renderSummaryCards()}
+          {quickActions.length > 0 && renderQuickActions()}
+          {tableData.length > 0 && renderCustomTable()}
+          {formFields.length > 0 && renderCustomForm()}
+          {additionalSections.length > 0 && renderAdditionalSections()}
           
-          {activeSection === 'form' && (
-            <FormSection 
-              {...formProps}
-              formData={formData}
-              formErrors={formErrors}
-              onFormChange={handleFormChange}
-              onSubmit={handleFormSubmit}
-            />
-          )}
-          
-          {activeSection === 'details' && selectedRecord && (
-            <DetailsSection 
-              {...detailsProps}
-              record={selectedRecord}
-            />
+          {/* Fallback to standard sections if no custom props */}
+          {summaryCards.length === 0 && tableData.length === 0 && formFields.length === 0 && additionalSections.length === 0 && (
+            <>
+              {activeSection === 'table' && (
+                <TableSection {...tableProps} />
+              )}
+              
+              {activeSection === 'form' && (
+                <FormSection 
+                  {...formProps}
+                  formData={formData}
+                  formErrors={formErrors}
+                  onFormChange={handleFormChange}
+                  onSubmit={handleFormSubmit}
+                />
+              )}
+              
+              {activeSection === 'details' && selectedRecord && (
+                <DetailsSection 
+                  {...detailsProps}
+                  record={selectedRecord}
+                />
+              )}
+            </>
           )}
         </main>
         

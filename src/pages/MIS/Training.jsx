@@ -417,72 +417,131 @@ const Training = () => {
     };
   };
 
+  // Summary statistics for training sessions
+  const summaryStats = [
+    {
+      title: "Total Sessions",
+      value: trainingSessions.length,
+      trend: "+12%",
+      trendDirection: "up",
+      icon: "📚"
+    },
+    {
+      title: "Active Groups",
+      value: new Set(trainingSessions.map(s => s.groupId)).size,
+      trend: "+8%",
+      trendDirection: "up",
+      icon: "👥"
+    },
+    {
+      title: "Total Participants",
+      value: trainingSessions.reduce((sum, s) => sum + (s.attendees?.total || 0), 0),
+      trend: "+15%",
+      trendDirection: "up",
+      icon: "🎓"
+    },
+    {
+      title: "Completion Rate",
+      value: "94%",
+      trend: "+3%",
+      trendDirection: "up",
+      icon: "✅"
+    }
+  ];
+
+  // Quick action buttons
+  const quickActions = [
+    {
+      label: 'Schedule Training',
+      onClick: () => navigate('/admin/training/create'),
+      variant: 'primary'
+    },
+    {
+      label: 'Training Reports',
+      onClick: () => alert('Training reports would be shown here'),
+      variant: 'secondary'
+    },
+    {
+      label: 'Export Data',
+      onClick: () => alert('Data export functionality would be implemented here'),
+      variant: 'secondary'
+    }
+  ];
+
   return (
     <AdminContentScaffold
       title="Training Management"
       subtitle="Manage AESA and GAP training sessions for FFS groups"
       
-      // Table configuration
-      data={trainingSessions}
-      columns={columns}
-      loading={loading}
-      error={error}
+      // Summary cards
+      summaryCards={summaryStats}
       
-      // Search and pagination
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-      searchPlaceholder="Search by group, topic, facilitator..."
-      pagination={pagination}
-      onPageChange={(page) => setPagination(prev => ({ ...prev, current: page }))}
+      // Quick action buttons
+      quickActions={quickActions}
       
-      // Actions
-      primaryActions={[
-        {
-          label: 'Schedule Training',
-          action: () => navigate('/admin/training/create'),
-          variant: 'primary'
-        }
-      ]}
+      // Main table section
+      tableTitle="Training Sessions"
+      tableColumns={columns}
+      tableData={trainingSessions}
+      renderTableRow={(session) => (
+        <tr key={session.id} className="hover:bg-gray-50">
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            {session.id}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {session.groupId}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {session.topic}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {session.facilitator}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {session.date}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {session.attendees?.total || 0}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              session.status === 'Completed' ? 'bg-green-100 text-green-800' :
+              session.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              {session.status}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => navigate(`/admin/training/view/${session.id}`)}
+                className="text-blue-600 hover:text-blue-900"
+              >
+                View
+              </button>
+              <button
+                onClick={() => navigate(`/admin/training/edit/${session.id}`)}
+                className="text-indigo-600 hover:text-indigo-900"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(session.id)}
+                className="text-red-600 hover:text-red-900"
+              >
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      )}
       
-      rowActions={[
-        {
-          label: 'View',
-          action: (session) => navigate(`/admin/training/view/${session.id}`),
-          icon: 'eye'
-        },
-        {
-          label: 'Edit',
-          action: (session) => navigate(`/admin/training/edit/${session.id}`),
-          icon: 'edit'
-        },
-        {
-          label: 'Delete',
-          action: (session) => handleDelete(session.id),
-          icon: 'trash',
-          variant: 'danger',
-          confirm: true
-        }
-      ]}
-      
-      // Form configuration
+      // Form section for creating/editing
+      formTitle={id ? "Edit Training Session" : "Schedule New Training"}
       formFields={formFields}
-      formData={getFormData()}
-      onFormSubmit={handleFormSubmit}
-      
-      // Details configuration
-      detailsFields={detailsFields}
-      detailsData={selectedRecord}
-      
-      // Section management
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      
-      // Navigation
-      breadcrumbs={[
-        { label: 'Dashboard', path: '/admin' },
-        { label: 'Training Management', path: '/admin/training' },
-        ...(id ? [{ label: selectedRecord?.topic || 'Session Details' }] : [])
-      ]}
+      onSubmit={handleFormSubmit}
+      submitButtonText={id ? "Update Session" : "Schedule Training"}
     />
   );
 };

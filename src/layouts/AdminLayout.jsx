@@ -341,7 +341,7 @@ export default function AdminLayout({ title = 'Admin Dashboard' }) {
                             )}
                             
                             {/* Hospital Logo/Brand */}
-                            <Link to="admin/dashboard" style={{
+                            <Link to="/" style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 textDecoration: 'none',

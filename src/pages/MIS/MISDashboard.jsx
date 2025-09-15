@@ -637,14 +637,14 @@ const MISDashboard = () => {
       }
     ],
     quickActions: [
-      { label: 'Register New Group', icon: Users, route: '/admin/registry/create', color: '#3b82f6' },
-      { label: 'Schedule Training', icon: GraduationCap, route: '/admin/training/create', color: '#8b5cf6' },
-      { label: 'Add Marketplace Item', icon: ShoppingCart, route: '/admin/marketplace/create', color: '#ef4444' },
-      { label: 'Record Transaction', icon: CreditCard, route: '/admin/financial/create', color: '#f59e0b' },
-      { label: 'Create Advisory', icon: BookOpen, route: '/admin/advisory/create', color: '#06b6d4' },
-      { label: 'Generate Report', icon: Activity, route: '/admin/monitoring', color: '#10b981' },
-      { label: 'Issue Loan', icon: DollarSign, route: '/admin/financial/loans/create', color: '#84cc16' },
-      { label: 'Monitor Progress', icon: Target, route: '/admin/monitoring/progress', color: '#f97316' }
+      { label: 'Register New Group', icon: Users, route: '/admin/registry', color: '#3b82f6' },
+      { label: 'Schedule Training', icon: GraduationCap, route: '/admin/training', color: '#8b5cf6' },
+      { label: 'Browse Marketplace', icon: ShoppingCart, route: '/admin/marketplace', color: '#ef4444' },
+      { label: 'Financial Tracking', icon: CreditCard, route: '/admin/financial', color: '#f59e0b' },
+      { label: 'Advisory Hub', icon: BookOpen, route: '/admin/advisory', color: '#06b6d4' },
+      { label: 'M&E Dashboard', icon: Activity, route: '/admin/monitoring', color: '#10b981' },
+      { label: 'VSLA Ledger', icon: DollarSign, route: '/admin/vsla-ledger', color: '#84cc16' },
+      { label: 'User Management', icon: Target, route: '/admin/users', color: '#f97316' }
     ]
   };
 

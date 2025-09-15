@@ -12,13 +12,13 @@ export default function AuthLayout({ title }) {
                 <div className="auth-brand-side">
                     <div className="auth-brand-content">
                         <Link to="/" className="auth-brand-link">
-                            <div className="auth-brand-logo">M</div>
+                            <div className="auth-brand-logo">🌾</div>
                             <h1 className="auth-brand-title">FOSTER</h1>
-                            <p className="auth-brand-subtitle">Professional</p>
+                            <p className="auth-brand-subtitle">Karamoja</p>
                         </Link>
                         <div className="auth-brand-description">
-                            <h2>Complete Hospital Management System</h2>
-                            <p>Streamline your healthcare operations with our comprehensive platform. Secure, reliable, and trusted by 500+ healthcare facilities worldwide.</p>
+                            <h2>Digital Agricultural Management System</h2>
+                            <p>Empowering Karamoja farmers with modern technology for sustainable agriculture. Secure, reliable, and designed for rural communities.</p>
                         </div>
                     </div>
                 </div>

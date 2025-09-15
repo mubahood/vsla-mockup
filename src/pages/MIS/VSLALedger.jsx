@@ -433,71 +433,182 @@ const VSLALedger = () => {
     };
   };
 
+  // Summary statistics for VSLA transactions
+  const summaryStats = [
+    {
+      title: "Total Groups",
+      value: new Set(transactions.map(t => t.groupName)).size,
+      trend: "+5%",
+      trendDirection: "up",
+      icon: "🏦"
+    },
+    {
+      title: "Total Savings",
+      value: `UGX ${transactions
+        .filter(t => t.type === 'Savings')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+        .toLocaleString()}`,
+      trend: "+12%",
+      trendDirection: "up",
+      icon: "💰"
+    },
+    {
+      title: "Active Loans",
+      value: transactions.filter(t => t.type === 'Loan' && t.status === 'Active').length,
+      trend: "+8%",
+      trendDirection: "up",
+      icon: "📋"
+    },
+    {
+      title: "Loan Recovery",
+      value: "92%",
+      trend: "+3%",
+      trendDirection: "up",
+      icon: "📈"
+    }
+  ];
+
+  // Quick action buttons
+  const quickActions = [
+    {
+      label: 'Record Transaction',
+      onClick: () => navigate('/admin/vsla-ledger/create'),
+      variant: 'primary'
+    },
+    {
+      label: 'Financial Reports',
+      onClick: () => alert('Financial reports would be shown here'),
+      variant: 'secondary'
+    },
+    {
+      label: 'Export Ledger',
+      onClick: () => alert('Ledger export functionality would be implemented here'),
+      variant: 'secondary'
+    }
+  ];
+
   return (
     <AdminContentScaffold
       title="VSLA Digital Ledger"
       subtitle="Digital financial tracking for Village Savings & Loan Associations"
       
-      // Table configuration
-      data={transactions}
-      columns={columns}
-      loading={loading}
-      error={error}
+      // Summary cards
+      summaryCards={summaryStats}
       
-      // Search and pagination
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-      searchPlaceholder="Search by group, member, type, purpose..."
-      pagination={pagination}
-      onPageChange={(page) => setPagination(prev => ({ ...prev, current: page }))}
+      // Quick action buttons
+      quickActions={quickActions}
       
-      // Actions
-      primaryActions={[
-        {
-          label: 'Record Transaction',
-          action: () => navigate('/admin/vsla-ledger/create'),
-          variant: 'primary'
-        }
-      ]}
+      // Main table section
+      tableTitle="Financial Transactions"
+      tableColumns={columns}
+      tableData={transactions}
+      renderTableRow={(transaction) => (
+        <tr key={transaction.id} className="hover:bg-gray-50">
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            {transaction.id}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {transaction.groupName}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {transaction.memberName}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {transaction.date}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              transaction.type === 'Savings' ? 'bg-green-100 text-green-800' :
+              transaction.type === 'Loan' ? 'bg-blue-100 text-blue-800' :
+              transaction.type === 'Repayment' ? 'bg-purple-100 text-purple-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {transaction.type}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+              UGX {Math.abs(transaction.amount).toLocaleString()}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              transaction.status === 'Completed' ? 'bg-green-100 text-green-800' :
+              transaction.status === 'Active' ? 'bg-blue-100 text-blue-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              {transaction.status}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => navigate(`/admin/vsla-ledger/view/${transaction.id}`)}
+                className="text-blue-600 hover:text-blue-900"
+              >
+                View
+              </button>
+              <button
+                onClick={() => navigate(`/admin/vsla-ledger/edit/${transaction.id}`)}
+                className="text-indigo-600 hover:text-indigo-900"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(transaction.id)}
+                className="text-red-600 hover:text-red-900"
+              >
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      )}
       
-      rowActions={[
-        {
-          label: 'View',
-          action: (transaction) => navigate(`/admin/vsla-ledger/view/${transaction.id}`),
-          icon: 'eye'
-        },
-        {
-          label: 'Edit',
-          action: (transaction) => navigate(`/admin/vsla-ledger/edit/${transaction.id}`),
-          icon: 'edit'
-        },
-        {
-          label: 'Delete',
-          action: (transaction) => handleDelete(transaction.id),
-          icon: 'trash',
-          variant: 'danger',
-          confirm: true
-        }
-      ]}
-      
-      // Form configuration
+      // Form section for creating/editing
+      formTitle={id ? "Edit Transaction" : "Record New Transaction"}
       formFields={formFields}
-      formData={getFormData()}
-      onFormSubmit={handleFormSubmit}
+      onSubmit={handleFormSubmit}
+      submitButtonText={id ? "Update Transaction" : "Record Transaction"}
       
-      // Details configuration
-      detailsFields={detailsFields}
-      detailsData={selectedRecord}
-      
-      // Section management
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      
-      // Navigation
-      breadcrumbs={[
-        { label: 'Dashboard', path: '/admin' },
-        { label: 'VSLA Ledger', path: '/admin/vsla-ledger' },
-        ...(id ? [{ label: selectedRecord?.memberName || 'Transaction Details' }] : [])
+      // Additional sections for financial analytics
+      additionalSections={[
+        {
+          title: "Group Financial Summary",
+          content: (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from(new Set(transactions.map(t => t.groupName))).map(groupName => {
+                const groupTransactions = transactions.filter(t => t.groupName === groupName);
+                const totalSavings = groupTransactions
+                  .filter(t => t.type === 'Savings')
+                  .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                const totalLoans = groupTransactions
+                  .filter(t => t.type === 'Loan')
+                  .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                
+                return (
+                  <div key={groupName} className="bg-white p-4 rounded-lg shadow border">
+                    <h4 className="font-semibold text-gray-900 mb-2">{groupName}</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Savings:</span>
+                        <span className="text-green-600 font-medium">UGX {totalSavings.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Loans:</span>
+                        <span className="text-blue-600 font-medium">UGX {totalLoans.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Members:</span>
+                        <span className="text-gray-900">{new Set(groupTransactions.map(t => t.memberName)).size}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
       ]}
     />
   );
