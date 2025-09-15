@@ -1,0 +1,423 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import PropTypes from 'prop-types';
+
+const SidebarMenu = ({ menuData = [] }) => {
+  const [expandedItems, setExpandedItems] = useState({});
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  // Memoize the active path check to avoid unnecessary re-calculations
+  const isActiveItem = useCallback((uri) => {
+    if (!uri) return false;
+    return currentPath === uri || currentPath.startsWith(uri + '/');
+  }, [currentPath]);
+
+  // Auto-expand parent items when child is active
+  useEffect(() => {
+    const findAndExpandActiveParents = (items, pathToExpand = []) => {
+      const newExpandedState = {};
+      
+      const processItems = (itemList, parentPath = []) => {
+        itemList.forEach(item => {
+          const currentItemPath = [...parentPath, item._key];
+          
+          if (isActiveItem(item.uri)) {
+            // Expand all parents of active item
+            parentPath.forEach(parentKey => {
+              newExpandedState[parentKey] = true;
+            });
+          }
+          
+          if (item.children && item.children.length > 0) {
+            processItems(item.children, currentItemPath);
+          }
+        });
+      };
+      
+      processItems(items);
+      setExpandedItems(prev => ({ ...prev, ...newExpandedState }));
+    };
+
+    if (menuData.length > 0) {
+      findAndExpandActiveParents(menuData);
+    }
+  }, [currentPath, menuData, isActiveItem]);
+
+  // Toggle menu item expansion
+  const toggleExpansion = useCallback((itemKey) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemKey]: !prev[itemKey]
+    }));
+  }, []);
+
+  // Menu item component for main level items
+  const MenuItem = React.memo(({ item }) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems[item._key];
+    const isActive = isActiveItem(item.uri);
+
+    const handleClick = useCallback((e) => {
+      if (hasChildren) {
+        e.preventDefault();
+        toggleExpansion(item._key);
+      }
+    }, [hasChildren, item._key, toggleExpansion]);
+
+    const menuContent = (
+      <div
+        className={`sidebar-menu__item ${isActive ? 'sidebar-menu__item--active' : ''}`}
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick(e);
+          }
+        }}
+        aria-expanded={hasChildren ? isExpanded : undefined}
+      >
+        <div className="sidebar-menu__item-content">
+          <div className="sidebar-menu__icon">
+            <span className="sidebar-menu__icon-dot"></span>
+          </div>
+          <span className="sidebar-menu__label">{item.title}</span>
+        </div>
+        {hasChildren && (
+          <div className={`sidebar-menu__chevron ${isExpanded ? 'sidebar-menu__chevron--expanded' : ''}`}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="sidebar-menu__item-wrapper">
+        {item.uri && !hasChildren ? (
+          <Link to={item.uri} className="sidebar-menu__link">
+            {menuContent}
+          </Link>
+        ) : (
+          menuContent
+        )}
+        
+        {hasChildren && isExpanded && (
+          <div className="sidebar-menu__submenu">
+            {item.children.map((child) => (
+              <SubMenuItem key={child._key} item={child} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  });
+
+  // Submenu item component
+  const SubMenuItem = React.memo(({ item }) => {
+    const isActive = isActiveItem(item.uri);
+
+    const submenuContent = (
+      <div className={`sidebar-menu__subitem ${isActive ? 'sidebar-menu__subitem--active' : ''}`}>
+        <div className="sidebar-menu__subitem-content">
+          <div className="sidebar-menu__connector">
+            <span className="sidebar-menu__connector-line"></span>
+          </div>
+          <span className="sidebar-menu__sublabel">{item.title}</span>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="sidebar-menu__subitem-wrapper">
+        {item.uri ? (
+          <Link to={item.uri} className="sidebar-menu__link">
+            {submenuContent}
+          </Link>
+        ) : (
+          submenuContent
+        )}
+      </div>
+    );
+  });
+
+  // Memoize the menu items to prevent unnecessary re-renders
+  const memoizedMenuItems = useMemo(() => {
+    return menuData.map((item) => (
+      <MenuItem key={item._key} item={item} />
+    ));
+  }, [menuData, expandedItems, currentPath]);
+
+  if (!menuData || menuData.length === 0) {
+    return (
+      <nav className="sidebar-menu sidebar-menu--empty">
+        <div className="sidebar-menu__empty-state">No menu items available</div>
+      </nav>
+    );
+  }
+
+  return (
+    <nav className="sidebar-menu" role="navigation" aria-label="Main navigation">
+      <div className="sidebar-menu__container">
+        {memoizedMenuItems}
+      </div>
+      <SidebarMenuStyles />
+    </nav>
+  );
+};
+
+// Separate styles component for better organization
+const SidebarMenuStyles = () => (
+  <style>{`
+        >
+          <div className="adm-item__content">
+            {/* Icon Container */}
+            <div className="adm-item__icon">
+              <div className="adm-item__icon-dot"></div>
+            </div>
+            
+            {/* Text Label */}
+            <span className="adm-item__label">
+              {item.title}
+            </span>
+          </div>
+          
+          {/* Chevron for expandable items */}
+          {hasChildren && (
+            <div className={`adm-item__chevron ${isOpen ? 'adm-item__chevron--expanded' : ''}`}>
+              ▾
+            </div>
+          )}
+        </div>
+      );
+
+      return (
+        <div className="adm-item" key={item._key}>
+          {item.uri && !hasChildren ? (
+            <Link to={item.uri} className="no-underline">
+              {content}
+            </Link>
+          ) : (
+            content
+          )}
+
+          {/* Children Submenu */}
+          {hasChildren && isOpen && (
+            <div className={`adm-submenu ${isActive ? 'adm-submenu--active' : ''}`}>
+              {item.children.map((child) => (
+                <ChildRow key={child._key} item={child} />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Fallback (shouldn't hit for depth 0)
+    return <ChildRow item={item} depth={depth} />;
+  };
+
+  const ChildRow = ({ item }) => {
+    const isChildActive = currentPath === item.uri || (item.uri && currentPath.startsWith(item.uri + '/'));
+
+    const content = (
+      <div className={`adm-child__wrapper ${isChildActive ? 'adm-child__wrapper--active' : ''}`}>
+        <div className="adm-child__content">
+          {/* Connector Line */}
+          <div className="adm-child__connector">
+            <div className="adm-child__connector-line"></div>
+          </div>
+          
+          {/* Child Label */}
+          <span className="adm-child__label">
+            {item.title}
+          </span>
+        </div>
+      </div>
+    );
+
+    return item.uri ? (
+      <Link to={item.uri} className="no-underline" onClick={handleNavigate}>
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+  };
+
+  return (
+    <nav className="adm-sidebar-root flex-1">
+      {/* Menu Items */}
+      <div className="adm-menu">
+        {menuData.map((item) => (
+          <ItemRow key={item._key} item={item} />
+        ))}
+      </div>
+
+      {/* Flat Design Admin Sidebar - Following Design Guidelines */}
+      <style>{`
+        /* Admin Sidebar Theme - Flat Design Guidelines */
+        .adm-sidebar-root {
+          background: #0a1e34;
+          width: 240px;
+          min-height: 100vh;
+          border-right: 1px solid #1a2e44;
+          padding: 16px 0;
+        }
+
+        /* Menu Container */
+        .adm-menu {
+          padding: 0;
+        }
+
+        /* Menu Items - Flat Design */
+        .adm-item {
+          margin-bottom: 4px;
+        }
+
+        .adm-item__wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          color: #ffffff;
+          cursor: pointer;
+          min-height: 36px;
+          border-left: 3px solid transparent;
+        }
+
+        .adm-item__wrapper:hover {
+          background: #1a2e44;
+        }
+
+        .adm-item__wrapper--active {
+          background: #1a2e44;
+          color: #ffffff;
+          border-left: 3px solid #f59e0b;
+        }
+
+        .adm-item__content {
+          display: flex;
+          align-items: center;
+        }
+
+        /* Simple Dot Icon - No Box */
+        .adm-item__icon {
+          width: 6px;
+          height: 6px;
+          margin-right: 12px;
+          flex-shrink: 0;
+        }
+
+        .adm-item__icon-dot {
+          width: 6px;
+          height: 6px;
+          background: #f59e0b;
+        }
+
+        .adm-item__wrapper--active .adm-item__icon-dot {
+          background: #ffffff;
+        }
+
+        .adm-item__label {
+          color: inherit;
+          font-size: 14px;
+          font-weight: 300;
+        }
+
+        /* Chevron for expandable items */
+        .adm-item__chevron {
+          color: #64748b;
+          font-size: 12px;
+        }
+
+        .adm-item__chevron--expanded {
+          transform: rotate(180deg);
+        }
+
+        .adm-item__wrapper--active .adm-item__chevron {
+          color: #ffffff;
+        }
+
+        /* Submenu Container */
+        .adm-submenu {
+          margin-top: 4px;
+          margin-left: 18px;
+          border-left: 1px solid #1a2e44;
+        }
+
+        /* Child Items - Flat Design */
+        .adm-child {
+          margin-bottom: 2px;
+        }
+
+        .adm-child__wrapper {
+          display: flex;
+          align-items: center;
+          padding: 6px 12px;
+          color: #94a3b8;
+          cursor: pointer;
+          min-height: 32px;
+          border-left: 2px solid transparent;
+        }
+
+        .adm-child__wrapper:hover {
+          background: #1a2e44;
+          color: #ffffff;
+        }
+
+        .adm-child__wrapper--active {
+          background: #1a2e44;
+          color: #ffffff;
+          border-left: 2px solid #f59e0b;
+        }
+
+        .adm-child__content {
+          display: flex;
+          align-items: center;
+          width: 100%;
+        }
+
+        /* Child Connector */
+        .adm-child__connector {
+          width: 12px;
+          height: 16px;
+          position: relative;
+          margin-right: 8px;
+          flex-shrink: 0;
+        }
+
+        .adm-child__connector-line {
+          position: absolute;
+          top: 8px;
+          left: 0;
+          width: 8px;
+          height: 1px;
+          background: #1a2e44;
+        }
+
+        .adm-child__label {
+          color: inherit;
+          font-size: 13px;
+          font-weight: 300;
+        }
+
+        /* Link Reset */
+        .no-underline {
+          text-decoration: none;
+          color: inherit;
+        }
+
+        .no-underline:hover {
+          text-decoration: none;
+          color: inherit;
+        }
+      `}</style>
+    </nav>
+  );
+}
+
+export default SidebarMenu;

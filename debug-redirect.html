@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirect Debug Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .button:hover { background: #0056b3; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Hospital App Redirect Debug Helper</h1>
+    
+    <div class="section">
+        <h2>Quick Actions</h2>
+        <button class="button" onclick="clearStorage()">🧹 Clear All Storage</button>
+        <button class="button" onclick="openApp()">🚀 Open App</button>
+        <button class="button" onclick="openLogin()">🔐 Open Login</button>
+        <button class="button" onclick="openAdmin()">👨‍⚕️ Open Admin</button>
+    </div>
+    
+    <div class="section">
+        <h2>Storage Contents</h2>
+        <div id="storageInfo">Loading...</div>
+        <button class="button" onclick="refreshStorage()">🔄 Refresh</button>
+    </div>
+    
+    <div class="section">
+        <h2>Test Scenarios</h2>
+        <button class="button" onclick="testFreshUser()">🆕 Test Fresh User</button>
+        <button class="button" onclick="testLoggedInUser()">✅ Test Logged In User</button>
+        <button class="button" onclick="testExpiredToken()">⏰ Test Expired Token</button>
+    </div>
+
+    <script>
+        const APP_URL = 'http://localhost:3002';
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('✅ Storage cleared!');
+            refreshStorage();
+        }
+        
+        function openApp() {
+            window.open(APP_URL, '_blank');
+        }
+        
+        function openLogin() {
+            window.open(APP_URL + '/auth/login', '_blank');
+        }
+        
+        function openAdmin() {
+            window.open(APP_URL + '/admin/dashboard', '_blank');
+        }
+        
+        function refreshStorage() {
+            const storage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                storage[key] = localStorage.getItem(key);
+            }
+            
+            document.getElementById('storageInfo').innerHTML = 
+                '<pre>' + JSON.stringify(storage, null, 2) + '</pre>';
+        }
+        
+        function testFreshUser() {
+            clearStorage();
+            setTimeout(() => openApp(), 500);
+        }
+        
+        function testLoggedInUser() {
+            // Set fake auth data
+            localStorage.setItem('hospital_token', 'fake-token-123');
+            localStorage.setItem('hospital_logged_in_profile', JSON.stringify({
+                id: 1,
+                name: 'Test User',
+                email: 'test@hospital.com'
+            }));
+            alert('✅ Fake login data set!');
+            refreshStorage();
+            setTimeout(() => openApp(), 500);
+        }
+        
+        function testExpiredToken() {
+            localStorage.setItem('hospital_token', 'expired-token');
+            localStorage.setItem('hospital_logged_in_profile', '{}');
+            alert('⏰ Expired token set!');
+            refreshStorage();
+            setTimeout(() => openApp(), 500);
+        }
+        
+        // Initial load
+        refreshStorage();
+    </script>
+</body>
+</html>
